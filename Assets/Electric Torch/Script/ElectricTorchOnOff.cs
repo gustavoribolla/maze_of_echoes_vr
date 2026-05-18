@@ -1,133 +1,144 @@
-﻿// - ElectricTorchOnOff - Script by Marcelli Michele
-
-// This script is attached in primary model (default) of the Electric Torch.
-// You can On/Off the light and choose any letter on the keyboard to control it
-// Use the "battery" or no and the duration time
-// Change the intensity of the light
-
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class ElectricTorchOnOff : MonoBehaviour
 {
-	EmissionMaterialGlassTorchFadeOut _emissionMaterialFade;
-	BatteryPowerPickup _batteryPower;
-	//
+    EmissionMaterialGlassTorchFadeOut _emissionMaterialFade;
+    BatteryPowerPickup _batteryPower;
 
-	public enum LightChoose
+    public enum LightChoose
     {
-		noBattery,
-		withBattery
+        noBattery,
+        withBattery
     }
 
-	public LightChoose modoLightChoose;
-	[Space]
-	[Space]
-	public string onOffLightKey = "F";
-	private KeyCode _kCode;
-	[Space]
-	[Space]
-	public bool _PowerPickUp = false;
-	[Space]
-	public float intensityLight = 2.5F;
-	private bool _flashLightOn = false;
-	[SerializeField] float _lightTime = 0.05f;
+    public LightChoose modoLightChoose;
 
+    [Header("VR Input")]
+    public InputActionReference toggleLightAction;
 
-	private void Awake()
+    [Header("Battery")]
+    public bool _PowerPickUp = false;
+
+    [Header("Light")]
+    public float intensityLight = 2.5F;
+    private bool _flashLightOn = false;
+
+    [SerializeField] float _lightTime = 0.05f;
+
+    private void Awake()
     {
-		_batteryPower = FindFirstObjectByType<BatteryPowerPickup>();
-	}
+        _batteryPower = FindFirstObjectByType<BatteryPowerPickup>();
+    }
+
     void Start()
-	{
-		GameObject _scriptControllerEmissionFade = GameObject.Find("default");
+    {
+        GameObject _scriptControllerEmissionFade = GameObject.Find("default");
 
-		if (_scriptControllerEmissionFade != null)
-		{
-			_emissionMaterialFade = _scriptControllerEmissionFade.GetComponent<EmissionMaterialGlassTorchFadeOut>();
-		}
-		if (_scriptControllerEmissionFade  == null) {Debug.Log("Cannot find 'EmissionMaterialGlassTorchFadeOut' script");}
+        if (_scriptControllerEmissionFade != null)
+        {
+            _emissionMaterialFade = _scriptControllerEmissionFade.GetComponent<EmissionMaterialGlassTorchFadeOut>();
+        }
 
-		_kCode = (KeyCode)System.Enum.Parse(typeof(KeyCode), onOffLightKey);
-	}
+        if (_scriptControllerEmissionFade == null)
+        {
+            Debug.Log("Cannot find 'EmissionMaterialGlassTorchFadeOut' script");
+        }
 
-	void Update()
-	{
-		// detecting parse error keyboard type
-		if (System.Enum.TryParse(onOffLightKey, out _kCode))
-		{
-			_kCode = (KeyCode)System.Enum.Parse(typeof(KeyCode), onOffLightKey);
-		}
-        //
+        if (toggleLightAction != null)
+        {
+            toggleLightAction.action.Enable();
+        }
+    }
 
+    void Update()
+    {
         switch (modoLightChoose)
         {
             case LightChoose.noBattery:
-				NoBatteryLight();
-				break;
+                NoBatteryLight();
+                break;
+
             case LightChoose.withBattery:
-				WithBatteryLight();
-				break;
+                WithBatteryLight();
+                break;
         }
-	}
+    }
 
-	void InputKey()
+    void InputKey()
     {
-		if (Input.GetKeyDown(_kCode) && _flashLightOn == true)
-		{
-			_flashLightOn = false;
+        if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame)
+        {
+            _flashLightOn = !_flashLightOn;
+        }
 
-		}
-		else if (Input.GetKeyDown(_kCode) && _flashLightOn == false)
-		{
-			_flashLightOn = true;
+        if (toggleLightAction != null && toggleLightAction.action.WasPressedThisFrame())
+        {
+            _flashLightOn = !_flashLightOn;
+        }
+    }
 
-		}
-	}
-
-	void NoBatteryLight()
+    void NoBatteryLight()
     {
-		if (_flashLightOn)
-		{
-			GetComponent<Light>().intensity = intensityLight;
-			_emissionMaterialFade.OnEmission();
-		}
-		else
-		{
-			GetComponent<Light>().intensity = 0.0f;
-			_emissionMaterialFade.OffEmission();
-		}
-		InputKey();
-	}
+        if (_flashLightOn)
+        {
+            GetComponent<Light>().intensity = intensityLight;
 
-	void WithBatteryLight()
-    {
-
-		if (_flashLightOn)
-		{
-			GetComponent<Light>().intensity = intensityLight;
-			intensityLight -= Time.deltaTime * _lightTime;
-			_emissionMaterialFade.TimeEmission(_lightTime);
-            
-			if (intensityLight < 0)
+            if (_emissionMaterialFade != null)
             {
-				intensityLight = 0;
-			}
-			if (_PowerPickUp == true)
-			{
-				intensityLight = _batteryPower.PowerIntensityLight;
-			}
-		}
-		else
-		{
-			GetComponent<Light>().intensity = 0.0f;
-			_emissionMaterialFade.OffEmission();
+                _emissionMaterialFade.OnEmission();
+            }
+        }
+        else
+        {
+            GetComponent<Light>().intensity = 0.0f;
 
-			if (_PowerPickUp == true)
-			{
-				intensityLight = _batteryPower.PowerIntensityLight;
-			}
-		}
+            if (_emissionMaterialFade != null)
+            {
+                _emissionMaterialFade.OffEmission();
+            }
+        }
 
-		InputKey();
-	}
+        InputKey();
+    }
+
+    void WithBatteryLight()
+    {
+        if (_flashLightOn)
+        {
+            GetComponent<Light>().intensity = intensityLight;
+            intensityLight -= Time.deltaTime * _lightTime;
+
+            if (_emissionMaterialFade != null)
+            {
+                _emissionMaterialFade.TimeEmission(_lightTime);
+            }
+
+            if (intensityLight < 0)
+            {
+                intensityLight = 0;
+            }
+
+            if (_PowerPickUp == true && _batteryPower != null)
+            {
+                intensityLight = _batteryPower.PowerIntensityLight;
+            }
+        }
+        else
+        {
+            GetComponent<Light>().intensity = 0.0f;
+
+            if (_emissionMaterialFade != null)
+            {
+                _emissionMaterialFade.OffEmission();
+            }
+
+            if (_PowerPickUp == true && _batteryPower != null)
+            {
+                intensityLight = _batteryPower.PowerIntensityLight;
+            }
+        }
+
+        InputKey();
+    }
 }
