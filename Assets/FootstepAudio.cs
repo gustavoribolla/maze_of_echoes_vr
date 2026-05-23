@@ -6,9 +6,10 @@ public class FootstepAudio : MonoBehaviour
     [SerializeField] private AudioSource footstepAudioSource;
     [SerializeField] private AudioClip footstepClip;
 
-    [SerializeField] private float stepInterval = 0.8f;
+    [Header("Configuração dos passos")]
+    [SerializeField] private float stepInterval = 0.9f;
     [SerializeField] private float movementThreshold = 0.02f;
-    [SerializeField] private float volume = 0.2f;
+    [SerializeField] private float volume = 0.15f;
 
     [Header("Teste sem VR")]
     [SerializeField] private bool allowKeyboardTest = true;
@@ -20,6 +21,14 @@ public class FootstepAudio : MonoBehaviour
     private void Start()
     {
         lastPosition = transform.position;
+
+        if (footstepAudioSource != null)
+        {
+            footstepAudioSource.clip = footstepClip;
+            footstepAudioSource.loop = false;
+            footstepAudioSource.playOnAwake = false;
+            footstepAudioSource.volume = volume;
+        }
     }
 
     private void Update()
@@ -39,7 +48,7 @@ public class FootstepAudio : MonoBehaviour
         {
             stepTimer -= Time.deltaTime;
 
-            if (stepTimer <= 0f)
+            if (stepTimer <= 0f && !footstepAudioSource.isPlaying)
             {
                 PlayFootstep();
                 stepTimer = stepInterval;
@@ -67,9 +76,10 @@ public class FootstepAudio : MonoBehaviour
 
     private void PlayFootstep()
     {
-        if (footstepAudioSource != null && footstepClip != null)
-        {
-            footstepAudioSource.PlayOneShot(footstepClip, volume);
-        }
+        if (footstepAudioSource == null || footstepClip == null) return;
+
+        footstepAudioSource.clip = footstepClip;
+        footstepAudioSource.volume = volume;
+        footstepAudioSource.Play();
     }
 }
