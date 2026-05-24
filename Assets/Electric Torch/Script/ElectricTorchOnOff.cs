@@ -3,7 +3,6 @@ using UnityEngine.InputSystem;
 
 public class ElectricTorchOnOff : MonoBehaviour
 {
-    EmissionMaterialGlassTorchFadeOut _emissionMaterialFade;
     BatteryPowerPickup _batteryPower;
 
     public enum LightChoose
@@ -12,47 +11,52 @@ public class ElectricTorchOnOff : MonoBehaviour
         withBattery
     }
 
+    [Header("Mode")]
     public LightChoose modoLightChoose;
 
     [Header("VR Input")]
     public InputActionReference toggleLightAction;
 
-    [Header("Battery")]
+    [Header("Battery Pickup Compatibility")]
     public bool _PowerPickUp = false;
 
     [Header("Light")]
-    public float intensityLight = 2.5F;
+    public float intensityLight = 2.5f;
     private bool _flashLightOn = false;
 
-    [SerializeField] float _lightTime = 0.05f;
+    [Header("Battery System")]
+    public float maxBattery = 100f;
+    public float currentBattery = 100f;
+    public float batteryDrainPerSecond = 2f;
+
+    [Header("Battery Visual Effect")]
+    public bool dimLightWithBattery = true;
+    public float minimumIntensityWhenLow = 0.25f;
+
+    private Light _torchLight;
+    private bool batteryEmptyMessageShown = false;
 
     private void Awake()
     {
+        _torchLight = GetComponent<Light>();
         _batteryPower = FindFirstObjectByType<BatteryPowerPickup>();
     }
 
-    void Start()
+    private void Start()
     {
-        GameObject _scriptControllerEmissionFade = GameObject.Find("default");
-
-        if (_scriptControllerEmissionFade != null)
-        {
-            _emissionMaterialFade = _scriptControllerEmissionFade.GetComponent<EmissionMaterialGlassTorchFadeOut>();
-        }
-
-        if (_scriptControllerEmissionFade == null)
-        {
-            Debug.Log("Cannot find 'EmissionMaterialGlassTorchFadeOut' script");
-        }
-
         if (toggleLightAction != null)
         {
             toggleLightAction.action.Enable();
         }
+
+        currentBattery = Mathf.Clamp(currentBattery, 0f, maxBattery);
+        UpdateLightState();
     }
 
-    void Update()
+    private void Update()
     {
+        HandleInput();
+
         switch (modoLightChoose)
         {
             case LightChoose.noBattery:
@@ -65,80 +69,133 @@ public class ElectricTorchOnOff : MonoBehaviour
         }
     }
 
-    void InputKey()
+    private void HandleInput()
     {
         if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame)
         {
-            _flashLightOn = !_flashLightOn;
+            ToggleLight();
         }
 
         if (toggleLightAction != null && toggleLightAction.action.WasPressedThisFrame())
         {
-            _flashLightOn = !_flashLightOn;
+            ToggleLight();
         }
     }
 
-    void NoBatteryLight()
+    private void ToggleLight()
     {
+        if (modoLightChoose == LightChoose.withBattery && currentBattery <= 0f)
+        {
+            _flashLightOn = false;
+            UpdateLightState();
+
+            if (!batteryEmptyMessageShown)
+            {
+                batteryEmptyMessageShown = true;
+
+                if (GameMessageUI.Instance != null)
+                {
+                    GameMessageUI.Instance.ShowMessage("Battery depleted. Find a battery.");
+                }
+            }
+
+            return;
+        }
+
+        _flashLightOn = !_flashLightOn;
+        UpdateLightState();
+    }
+
+    private void NoBatteryLight()
+    {
+        UpdateLightState();
+    }
+
+    private void WithBatteryLight()
+    {
+        if (_PowerPickUp && _batteryPower != null)
+        {
+            RechargeBattery(maxBattery);
+            intensityLight = _batteryPower.PowerIntensityLight;
+            _PowerPickUp = false;
+        }
+
         if (_flashLightOn)
         {
-            GetComponent<Light>().intensity = intensityLight;
+            currentBattery -= batteryDrainPerSecond * Time.deltaTime;
 
-            if (_emissionMaterialFade != null)
+            if (currentBattery <= 0f)
             {
-                _emissionMaterialFade.OnEmission();
+                currentBattery = 0f;
+                _flashLightOn = false;
+
+                if (!batteryEmptyMessageShown)
+                {
+                    batteryEmptyMessageShown = true;
+
+                    if (GameMessageUI.Instance != null)
+                    {
+                        GameMessageUI.Instance.ShowMessage("Battery depleted. Find a battery.");
+                    }
+                }
+            }
+        }
+
+        UpdateLightState();
+    }
+
+    private void UpdateLightState()
+    {
+        if (_torchLight == null) return;
+
+        bool canTurnOn = modoLightChoose == LightChoose.noBattery || currentBattery > 0f;
+
+        if (_flashLightOn && canTurnOn)
+        {
+            if (modoLightChoose == LightChoose.withBattery && dimLightWithBattery)
+            {
+                float batteryPercent = GetBatteryPercent();
+                float intensityMultiplier = Mathf.Lerp(minimumIntensityWhenLow, 1f, batteryPercent);
+                _torchLight.intensity = intensityLight * intensityMultiplier;
+            }
+            else
+            {
+                _torchLight.intensity = intensityLight;
             }
         }
         else
         {
-            GetComponent<Light>().intensity = 0.0f;
-
-            if (_emissionMaterialFade != null)
-            {
-                _emissionMaterialFade.OffEmission();
-            }
+            _torchLight.intensity = 0f;
         }
-
-        InputKey();
     }
 
-    void WithBatteryLight()
+    public void RechargeBattery(float amount)
     {
-        if (_flashLightOn)
+        currentBattery += amount;
+        currentBattery = Mathf.Clamp(currentBattery, 0f, maxBattery);
+
+        batteryEmptyMessageShown = false;
+
+        if (GameMessageUI.Instance != null)
         {
-            GetComponent<Light>().intensity = intensityLight;
-            intensityLight -= Time.deltaTime * _lightTime;
-
-            if (_emissionMaterialFade != null)
-            {
-                _emissionMaterialFade.TimeEmission(_lightTime);
-            }
-
-            if (intensityLight < 0)
-            {
-                intensityLight = 0;
-            }
-
-            if (_PowerPickUp == true && _batteryPower != null)
-            {
-                intensityLight = _batteryPower.PowerIntensityLight;
-            }
-        }
-        else
-        {
-            GetComponent<Light>().intensity = 0.0f;
-
-            if (_emissionMaterialFade != null)
-            {
-                _emissionMaterialFade.OffEmission();
-            }
-
-            if (_PowerPickUp == true && _batteryPower != null)
-            {
-                intensityLight = _batteryPower.PowerIntensityLight;
-            }
+            GameMessageUI.Instance.ShowMessage("Lantern recharged.");
         }
 
-        InputKey();
+        UpdateLightState();
+    }
+
+    public float GetBatteryPercent()
+    {
+        if (maxBattery <= 0f)
+        {
+            return 0f;
+        }
+
+        return currentBattery / maxBattery;
+    }
+
+    public bool IsLightOn()
+    {
+        return _flashLightOn;
     }
 }
