@@ -7,11 +7,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject startMenu;
     [SerializeField] private GameObject endMenu;
 
+    [Header("Menu Ray")]
+    [SerializeField] private GameObject menuRay;
+
     [Header("Movimento do jogador")]
     [SerializeField] private Behaviour[] locomotionComponents;
-
-    [Header("Interação de menu")]
-    [SerializeField] private Behaviour[] menuInteractionComponents;
 
     private bool gameStarted = false;
     private bool gameEnded = false;
@@ -22,49 +22,43 @@ public class GameManager : MonoBehaviour
         gameEnded = false;
 
         if (startMenu != null)
-        {
             startMenu.SetActive(true);
-        }
 
         if (endMenu != null)
-        {
             endMenu.SetActive(false);
-        }
 
         SetLocomotionEnabled(false);
-        SetMenuInteractionEnabled(true);
+        SetMenuRayEnabled(true);
     }
 
     public void StartGame()
     {
+        Debug.Log("StartGame chamado");
+
         gameStarted = true;
         gameEnded = false;
 
         if (startMenu != null)
-        {
             startMenu.SetActive(false);
-        }
 
         SetLocomotionEnabled(true);
-        SetMenuInteractionEnabled(false);
+        SetMenuRayEnabled(false);
     }
 
     public void EndGame()
     {
+        Debug.Log("EndGame chamado");
+
         if (!gameStarted || gameEnded)
-        {
             return;
-        }
 
         gameEnded = true;
 
         if (endMenu != null)
-        {
             endMenu.SetActive(true);
-        }
 
         SetLocomotionEnabled(false);
-        SetMenuInteractionEnabled(true);
+        SetMenuRayEnabled(true);
     }
 
     public void RestartGame()
@@ -86,20 +80,20 @@ public class GameManager : MonoBehaviour
         foreach (Behaviour component in locomotionComponents)
         {
             if (component != null)
-            {
                 component.enabled = enabled;
-            }
         }
     }
 
-    private void SetMenuInteractionEnabled(bool enabled)
+    private void SetMenuRayEnabled(bool enabled)
     {
-        foreach (Behaviour component in menuInteractionComponents)
+        if (menuRay != null)
         {
-            if (component != null)
-            {
-                component.enabled = enabled;
-            }
+            menuRay.SetActive(enabled);
+            Debug.Log("MenuRay ativo: " + enabled);
+        }
+        else
+        {
+            Debug.LogWarning("MenuRay não foi atribuído no GameManager.");
         }
     }
 }
