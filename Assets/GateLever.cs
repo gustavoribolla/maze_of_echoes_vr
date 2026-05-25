@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 
 public class GateLever : MonoBehaviour
 {
+    [SerializeField] private bool enableKeyboardDebug = true;
     [Header("References")]
     [SerializeField] private Transform player;
     [SerializeField] private FinalGateController gateController;
@@ -61,7 +62,7 @@ public class GateLever : MonoBehaviour
         bool keyboardPressed = false;
         bool vrPressed = false;
 
-        if (Keyboard.current != null)
+        if (enableKeyboardDebug && Keyboard.current != null)
         {
             keyboardPressed = Keyboard.current[keyboardInteractKey].wasPressedThisFrame;
         }

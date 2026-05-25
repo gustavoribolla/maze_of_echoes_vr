@@ -7,6 +7,7 @@ public class DesktopTestMovement : MonoBehaviour
     [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private float turnSpeed = 90f;
     [SerializeField] private float gravity = -9.81f;
+    [SerializeField] private bool enableKeyboardDebug = true;
 
     private CharacterController characterController;
     private float verticalVelocity;
@@ -18,6 +19,7 @@ public class DesktopTestMovement : MonoBehaviour
 
     private void Update()
     {
+        if (!enableKeyboardDebug) return;
         if (Keyboard.current == null || characterController == null) return;
 
         Vector2 input = Vector2.zero;
