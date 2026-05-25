@@ -1,7 +1,14 @@
 fileFormatVersion: 2
 guid: abc00000000006290382300565026047
+AssetOrigin:
+  serializedVersion: 1
+  productId: 301084
+  packageName: KHS - Soswaewon Garden, Damyang
+  packageVersion: 1.0
+  assetPath: Assets/Soswaewon/Meshes/Buildings/SM_JWD_Wall02a.fbx
+  uploadId: 709398
 ModelImporter:
-  serializedVersion: 22200
+  serializedVersion: 24200
   internalIDToNameTable:
   - first:
       1: 100000
@@ -53,8 +60,6 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 0
     motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -95,6 +100,9 @@ ModelImporter:
     maxBonesPerVertex: 4
     minBoneWeight: 0.001
     optimizeBones: 1
+    generateMeshLods: 1
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
     meshOptimizationFlags: 1
     indexFormat: 2
     secondaryUVAngleDistortion: 8
@@ -144,10 +152,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 301084
-  packageName: KHS - Soswaewon Garden, Damyang
-  packageVersion: 1.0
-  assetPath: Assets/Soswaewon/Meshes/Buildings/SM_JWD_Wall02a.fbx
-  uploadId: 709398
